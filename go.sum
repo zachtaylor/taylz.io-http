@@ -1,2 +1,4 @@
 github.com/AaronO/go-git-http v0.0.0-20161214145340-1d9485b3a98f h1:x/RDwGRneK2/891S2o7KhZt3MhHMSCssoeDOfvolTMk=
 github.com/AaronO/go-git-http v0.0.0-20161214145340-1d9485b3a98f/go.mod h1:+6Yuq73F9068Na+mSBNXCvyuxvgw4f/g5ii40e3U8Sc=
+taylz.io/keygen v0.0.0-20200510013209-ef354d3a0ea6 h1:RwI4+pUOtD7MgoaKELYq+6kzjfZ1Y+nMdJuhdBg9DUA=
+taylz.io/keygen v0.0.0-20200510013209-ef354d3a0ea6/go.mod h1:kzAY0l2OYCpbs5zO0VZoC1VOGw/WEX87cSxFmvxZIlg=
