@@ -1,22 +1,26 @@
-package mux
+package server
 
 import (
 	"net/http"
 
 	"taylz.io/http/route"
+	"taylz.io/http/router"
 )
 
 // Mux is slice of *T that implements http.Handler
 type Mux []*route.T
 
 // Add adds Route to this Mux
-func (mux *Mux) Add(t *T) {
+func (mux *Mux) Add(t *route.T) {
 	*mux = append(*mux, t)
 }
 
 // Route is a macro for Add(T{})
-func (mux *Mux) Route(r I, h http.Handler) {
-	mux.Add(&T{r, h})
+func (mux *Mux) Route(r router.I, h http.Handler) {
+	mux.Add(&route.T{
+		Router:  r,
+		Handler: h,
+	})
 }
 
 // ServeHTTP dispatched the request to the internal route
