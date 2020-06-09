@@ -1,17 +1,15 @@
 package session
 
 import (
-	"net/http"
 	"time"
 )
 
 // T is a Session
 type T struct {
-	id    string
-	name  string
-	in    chan bool
-	done  chan bool
-	socks []string
+	id   string
+	name string
+	in   chan bool
+	done chan bool
 }
 
 // ID returns the Session ID
@@ -22,14 +20,6 @@ func (session *T) ID() string {
 // Name returns the name of this Session
 func (session *T) Name() string {
 	return session.name
-}
-
-// Cookie returns a Cookie that encodes this Session
-func (session *T) Cookie() *http.Cookie {
-	return &http.Cookie{
-		Name:  "SessionID",
-		Value: session.id,
-	}
 }
 
 // Refresh sends a refresh signal

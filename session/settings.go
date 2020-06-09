@@ -1,7 +1,6 @@
 package session
 
 import (
-	"net/http"
 	"time"
 
 	"taylz.io/keygen"
@@ -22,13 +21,4 @@ var SettingsDefault = Settings{
 		CharSet: keygen.CharsetAlphaCapitalNumeric,
 		Rand:    keygen.DefaultSettings.Rand,
 	},
-}
-
-// ReadCookie returns the Request cookie value associated to the CookieID setting
-func (settings Settings) ReadCookie(r *http.Request) string {
-	cookie, err := r.Cookie(settings.CookieID)
-	if err != nil {
-		return ""
-	}
-	return cookie.Value
 }

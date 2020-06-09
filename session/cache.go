@@ -1,6 +1,9 @@
 package session
 
-import "sync"
+import (
+	"net/http"
+	"sync"
+)
 
 // Cache manages Sessions
 type Cache struct {
@@ -47,21 +50,29 @@ func (c *Cache) Find(name string) (session *T) {
 	return
 }
 
+// RequestSessionCookie returns Session associated to the Request via Session cookie
+func (c *Cache) RequestSessionCookie(r *http.Request) (session *T) {
+	cookie, err := r.Cookie(c.settings.CookieID)
+	if err != nil {
+		return nil
+	}
+	return c.cache[cookie.Value]
+}
+
 // Grant returns a new Session granted to the username
 //
 // This is the canonical way to create a Session
 func (c *Cache) Grant(name string) *T {
 	c.lock.Lock() // guards cache write
 	var id string
-	for ok := false; !ok; _, ok = c.cache[id] {
+	for ok := true; ok; _, ok = c.cache[id] {
 		id = c.settings.Keygen.Keygen()
 	}
 	session := &T{
-		id:    id,
-		name:  name,
-		in:    make(chan bool),
-		done:  make(chan bool),
-		socks: make([]string, 0),
+		id:   id,
+		name: name,
+		in:   make(chan bool),
+		done: make(chan bool),
 	}
 	c.cache[id] = session
 	c.lock.Unlock()
