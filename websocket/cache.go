@@ -67,7 +67,7 @@ func (c *Cache) connect(conn *websocket.Conn) {
 	c.lock.Lock()
 	var id string
 	for ok := true; ok; _, ok = c.cache[id] {
-		id = c.settings.Keygen.Keygen()
+		id = c.settings.Keygen.New()
 	}
 	ws := New(id, conn)
 	c.cache[id] = ws

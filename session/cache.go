@@ -66,7 +66,7 @@ func (c *Cache) Grant(name string) *T {
 	c.lock.Lock() // guards cache write
 	var id string
 	for ok := true; ok; _, ok = c.cache[id] {
-		id = c.settings.Keygen.Keygen()
+		id = c.settings.Keygen.New()
 	}
 	session := &T{
 		id:   id,

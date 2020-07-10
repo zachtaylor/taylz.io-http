@@ -21,7 +21,7 @@ func (t *T) Name() string {
 
 // WriteJSON is a macro for Write() with json encoding
 func (t *T) WriteJSON(dict types.Dict) {
-	t.Write(types.NewBytesString(types.NewStringDict(dict)))
+	t.Write(types.NewBytesString(types.StringDict(dict)))
 }
 
 func (t *T) Write(data types.Bytes) {

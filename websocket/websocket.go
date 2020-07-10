@@ -50,7 +50,7 @@ func (ws *T) Close() {
 
 // Message implements Messager
 func (ws *T) Message(m *Message) {
-	ws.Write(types.NewBytesString(types.NewStringDict(m.JSON())))
+	ws.Write(types.NewBytesString(types.StringDict(m.JSON())))
 }
 
 var wsLonely = types.Bytes(`{"uri":"/ping"}`)
