@@ -7,9 +7,17 @@ import (
 
 // Cache is a user store
 type Cache struct {
-	settings *Settings
+	settings Settings
 	cache    map[string]*T
 	lock     types.Mutex
+}
+
+// NewCache creates a user store
+func NewCache(settings Settings) *Cache {
+	return &Cache{
+		settings: settings,
+		cache:    make(map[string]*T),
+	}
 }
 
 // Get returns the user associated to the name, if available
@@ -22,7 +30,7 @@ func (c *Cache) User(session *session.T) (t *T) {
 	c.lock.Lock()
 	if t = c.cache[session.Name()]; t == nil {
 		t = &T{
-			settings: c.settings,
+			settings: &c.settings,
 			session:  session,
 			socks:    types.NewSetString(),
 		}
