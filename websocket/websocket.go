@@ -22,7 +22,7 @@ func New(id string, conn *websocket.Conn) *T {
 		id:   id,
 		conn: conn,
 		send: make(chan types.Bytes),
-		recv: newChanMessageConn(conn),
+		recv: newChanMessage(conn),
 		done: make(chan bool),
 	}
 }
@@ -50,17 +50,17 @@ func (ws *T) Close() {
 
 // Message implements Messager
 func (ws *T) Message(m *Message) {
-	ws.Write(types.NewBytesString(types.StringDict(m.JSON())))
+	ws.Write(types.BytesString(types.StringDict(m.JSON())))
 }
 
 var wsLonely = types.Bytes(`{"uri":"/ping"}`)
 
-// newChanMessageConn creates a goroutine monitor using newMessageConn
-func newChanMessageConn(conn *websocket.Conn) <-chan *Message {
+// newChanMessage creates a goroutine monitor using nextMessage
+func newChanMessage(conn *websocket.Conn) <-chan *Message {
 	msgs := make(chan *Message)
 	go func() {
 		for {
-			if msg, err := newMessageConn(conn); err == nil {
+			if msg, err := nextMessage(conn); err == nil {
 				msgs <- msg
 			} else if err == types.EOF {
 				break
@@ -71,12 +71,12 @@ func newChanMessageConn(conn *websocket.Conn) <-chan *Message {
 	return msgs
 }
 
-// newMessageConn synchronously reads a Message from the socket API
-func newMessageConn(conn *websocket.Conn) (*Message, error) {
+// nextMessage synchronously reads a Message from the socket API
+func nextMessage(conn *websocket.Conn) (*Message, error) {
 	s, msg := "", &Message{}
 	if err := websocket.Message.Receive(conn, &s); err != nil {
 		return nil, err
-	} else if err := types.DecodeJSON(types.NewBufferString(s), msg); err != nil {
+	} else if err := types.DecodeJSON(types.BufferString(s), msg); err != nil {
 		return nil, err
 	}
 	return msg, nil

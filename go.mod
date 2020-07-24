@@ -4,7 +4,8 @@ go 1.14
 
 require (
 	github.com/AaronO/go-git-http v0.0.0-20161214145340-1d9485b3a98f
+	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	taylz.io/keygen v0.0.0-20200709232401-e4722243b34f
-	taylz.io/types v0.0.0-20200709233105-c2612282c3fb
+	taylz.io/types v0.0.0-20200714041129-9205d7a3b492
 	taylz.io/z/charset v0.0.0
 )

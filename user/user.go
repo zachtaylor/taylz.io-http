@@ -5,6 +5,7 @@ import (
 	"taylz.io/types"
 )
 
+// T is a user
 type T struct {
 	settings *Settings
 	session  *session.T
@@ -21,7 +22,7 @@ func (t *T) Name() string {
 
 // WriteJSON is a macro for Write() with json encoding
 func (t *T) WriteJSON(dict types.Dict) {
-	t.Write(types.NewBytesString(types.StringDict(dict)))
+	t.Write(types.BytesString(types.StringDict(dict)))
 }
 
 func (t *T) Write(data types.Bytes) {

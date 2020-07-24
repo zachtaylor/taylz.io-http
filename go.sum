@@ -11,7 +11,7 @@ golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 taylz.io/keygen v0.0.0-20200709232401-e4722243b34f h1:wBwQgv/Gt2kZfnm9RnUXD82B9T3S9MMKUTG2r/wj7TA=
 taylz.io/keygen v0.0.0-20200709232401-e4722243b34f/go.mod h1:ydkPteQzhFx7i3HG6Sdj4sV7ammePVVZqeXkUo29pgY=
-taylz.io/types v0.0.0-20200709233105-c2612282c3fb h1:1MIIGN3960aqkqi/KxswVlH//GLfAI6OLFDF9cXETGA=
-taylz.io/types v0.0.0-20200709233105-c2612282c3fb/go.mod h1:0HLZiOl1H6poLsaD/TS/OjkZb5dykB54NJo/xmAP3kg=
+taylz.io/types v0.0.0-20200714041129-9205d7a3b492 h1:WiVMJQmeLXpKJx0UaP67vQxW6FcmrZMGSh6AdcPQMFY=
+taylz.io/types v0.0.0-20200714041129-9205d7a3b492/go.mod h1:0HLZiOl1H6poLsaD/TS/OjkZb5dykB54NJo/xmAP3kg=
 taylz.io/z/charset v0.0.0 h1:ccNoMAZiI4hCsReriYsH3sLvJ40lhZh+K3ju+dop8eM=
 taylz.io/z/charset v0.0.0/go.mod h1:qiJv+jXWeY/TJDIRZhr/pXfTVj3uDjJEw2F3utyuco0=
