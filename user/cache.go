@@ -1,50 +1,71 @@
 package user
 
-import (
-	"taylz.io/http/session"
-	"taylz.io/types"
-)
+import "sync"
 
-// Cache is a user store
+// Cache is an observable concurrent in-memory datastore
 type Cache struct {
-	settings Settings
-	cache    map[string]*T
-	lock     types.Mutex
+	dat map[string]*T
+	mu  sync.Mutex
+	obs []Func
 }
 
-// NewCache creates a user store
-func NewCache(settings Settings) *Cache {
+// Func is a callback func
+type Func = func(string, *T)
+
+// NewCache returns a new Cache
+func NewCache() *Cache {
 	return &Cache{
-		settings: settings,
-		cache:    make(map[string]*T),
+		dat: make(map[string]*T),
+		obs: make([]Func, 0),
 	}
 }
 
-// Get returns the user associated to the name, if available
-func (c *Cache) Get(name string) *T {
-	return c.cache[name]
-}
+// Get returns the *T for an string
+func (c *Cache) Get(k string) *T { return c.dat[k] }
 
-// User returns a user for the session, creates it if necessary
-func (c *Cache) User(session *session.T) (t *T) {
-	c.lock.Lock()
-	if t = c.cache[session.Name()]; t == nil {
-		t = &T{
-			settings: &c.settings,
-			session:  session,
-			socks:    types.NewSetString(),
-		}
-		go c.wait(t)
-		c.cache[session.Name()] = t
+// Set saves a *T for an string
+func (c *Cache) Set(k string, v *T) {
+	c.mu.Lock()
+	if v != nil {
+		c.dat[k] = v
+	} else {
+		delete(c.dat, k)
 	}
-	c.lock.Unlock()
-	return
+	c.mu.Unlock()
+	for _, f := range c.obs {
+		f(k, v)
+	}
 }
 
-func (c *Cache) wait(t *T) {
-	<-t.session.Done()
-	c.lock.Lock()
-	delete(c.cache, t.session.Name())
-	c.lock.Unlock()
-	t.destroy()
+// Each calls the func for each string,*T in this Cache
+func (c *Cache) Each(f Func) {
+	c.mu.Lock()
+	for k, v := range c.dat {
+		f(k, v)
+	}
+	c.mu.Unlock()
 }
+
+// Sync calls the func within the cache lock state
+func (c *Cache) Sync(f func(map[string]*T)) {
+	c.mu.Lock()
+	f(c.dat)
+	c.mu.Unlock()
+}
+
+// Keys returns a new slice with all the string keys
+func (c *Cache) Keys() []string {
+	c.mu.Lock()
+	keys := make([]string, 0, len(c.dat))
+	for k := range c.dat {
+		keys = append(keys, k)
+	}
+	c.mu.Unlock()
+	return keys
+}
+
+// Observe adds a func to be called when a *T is explicitly set
+func (c *Cache) Observe(f Func) { c.obs = append(c.obs, f) }
+
+// Remove deletes an string *T
+func (c *Cache) Remove(k string) { c.Set(k, nil) }

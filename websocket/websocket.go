@@ -2,30 +2,48 @@ package websocket
 
 import (
 	"golang.org/x/net/websocket"
-	"taylz.io/http/session"
+	"taylz.io/keygen"
 	"taylz.io/types"
 )
 
 // T is a Websocket
 type T struct {
-	id      string
-	conn    *websocket.Conn
-	send    chan types.Bytes
-	recv    <-chan *Message
-	done    chan bool
-	Session *session.T
+	Conn *Conn
+	id   string
+	send chan types.Bytes
+	recv <-chan *Message
+	done chan bool
 }
 
-// New creates an initialied orphan Websocket
-func New(id string, conn *websocket.Conn) *T {
-	return &T{
-		id:   id,
-		conn: conn,
-		send: make(chan types.Bytes),
-		recv: newChanMessage(conn),
-		done: make(chan bool),
-	}
+// Conn = websocket.Conn
+type Conn = websocket.Conn
+
+// Upgrader = websocket.Handler
+type Upgrader = websocket.Handler
+
+// New creates an initialized orphan Websocket
+func New(conn *Conn, cache *Cache, keygen keygen.I) (ws *T) {
+	cache.Sync(func(dat map[string]*T) {
+		var id string
+		for ok := true; ok; _, ok = dat[id] {
+			id = keygen.New()
+		}
+		ws = &T{
+			Conn: conn,
+			id:   id,
+			send: make(chan types.Bytes),
+			recv: newChanMessage(conn),
+			done: make(chan bool),
+		}
+		dat[id] = ws
+		// go watch(cache, ws)
+		// upgrader is responsible for goroutine
+	})
+	return
 }
+
+// ID returns the websocket ID
+func (ws *T) ID() string { return ws.id }
 
 // Write starts a goroutine to write bytes to to the socket API
 func (ws *T) Write(buff types.Bytes) {
@@ -44,7 +62,8 @@ func (ws *T) Close() {
 		ws.send = nil
 		close(ws.done)
 		ws.done = nil
-		ws.recv = nil // close managed by wsNewChanMessageConn
+		// close(ws.recv) managed by wsNewChanMessageConn
+		ws.recv = nil
 	}
 }
 
@@ -52,11 +71,12 @@ func (ws *T) Close() {
 func (ws *T) Message(m *Message) {
 	ws.Write(types.BytesString(types.StringDict(m.JSON())))
 }
+func (ws *T) isMessager() Messager { return ws }
 
 var wsLonely = types.Bytes(`{"uri":"/ping"}`)
 
 // newChanMessage creates a goroutine monitor using nextMessage
-func newChanMessage(conn *websocket.Conn) <-chan *Message {
+func newChanMessage(conn *Conn) <-chan *Message {
 	msgs := make(chan *Message)
 	go func() {
 		for {
@@ -72,7 +92,7 @@ func newChanMessage(conn *websocket.Conn) <-chan *Message {
 }
 
 // nextMessage synchronously reads a Message from the socket API
-func nextMessage(conn *websocket.Conn) (*Message, error) {
+func nextMessage(conn *Conn) (*Message, error) {
 	s, msg := "", &Message{}
 	if err := websocket.Message.Receive(conn, &s); err != nil {
 		return nil, err
@@ -82,8 +102,8 @@ func nextMessage(conn *websocket.Conn) (*Message, error) {
 	return msg, nil
 }
 
-// wsDrainMessageChan waits to receive all messages, and returns when it reaches the end
-func wsDrainMessageChan(msgs <-chan *Message) {
+// drainChanMessage waits to receive all messages, and returns when it reaches the end
+func drainChanMessage(msgs <-chan *Message) {
 	for {
 		_, ok := <-msgs
 		if !ok {

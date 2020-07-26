@@ -1,89 +1,71 @@
 package session
 
-import (
-	"net/http"
-	"sync"
-)
+import "sync"
 
-// Cache manages Sessions
+// Cache is an observable concurrent in-memory datastore
 type Cache struct {
-	settings Settings
-	cache    map[string]*T
-	lock     sync.Mutex // guards cache write
+	dat map[string]*T
+	mu  sync.Mutex
+	obs []Func
 }
 
-// NewCache creates a new Sessions cache
-func NewCache(settings Settings) *Cache {
-	c := &Cache{
-		settings: settings,
-		cache:    make(map[string]*T),
+// Func is a callback func
+type Func = func(string, *T)
+
+// NewCache returns a new Cache
+func NewCache() *Cache {
+	return &Cache{
+		dat: make(map[string]*T),
+		obs: make([]Func, 0),
 	}
-	return c
 }
 
-// Count returns number of active Sessions
-func (c *Cache) Count() int {
-	return len(c.cache)
-}
+// Get returns the *T for an string
+func (c *Cache) Get(k string) *T { return c.dat[k] }
 
-// Has implements KeyStorer
-func (c *Cache) Has(id string) (ok bool) {
-	_, ok = c.cache[id]
-	return
-}
-
-// Get returns a Session by id, if any
-func (c *Cache) Get(id string) *T {
-	return c.cache[id]
-}
-
-// Find returns a Session by name, if any
-func (c *Cache) Find(name string) (session *T) {
-	c.lock.Lock() // guards cache write
-	for _, s := range c.cache {
-		if name == s.name {
-			session = s
-			break
-		}
+// Set saves a *T for an string
+func (c *Cache) Set(k string, v *T) {
+	c.mu.Lock()
+	if v != nil {
+		c.dat[k] = v
+	} else {
+		delete(c.dat, k)
 	}
-	c.lock.Unlock()
-	return
+	c.mu.Unlock()
+	for _, f := range c.obs {
+		f(k, v)
+	}
 }
 
-// RequestSessionCookie returns Session associated to the Request via Session cookie
-func (c *Cache) RequestSessionCookie(r *http.Request) (session *T) {
-	cookie, err := r.Cookie(c.settings.CookieID)
-	if err != nil {
-		return nil
+// Each calls the func for each string,*T in this Cache
+func (c *Cache) Each(f Func) {
+	c.mu.Lock()
+	for k, v := range c.dat {
+		f(k, v)
 	}
-	return c.cache[cookie.Value]
+	c.mu.Unlock()
 }
 
-// Grant returns a new Session granted to the username
-//
-// This is the canonical way to create a Session
-func (c *Cache) Grant(name string) *T {
-	c.lock.Lock() // guards cache write
-	var id string
-	for ok := true; ok; _, ok = c.cache[id] {
-		id = c.settings.Keygen.New()
-	}
-	session := &T{
-		id:   id,
-		name: name,
-		in:   make(chan bool),
-		done: make(chan bool),
-	}
-	c.cache[id] = session
-	c.lock.Unlock()
-	go c.watch(session)
-	return session
+// Sync calls the func within the cache lock state
+func (c *Cache) Sync(f func(map[string]*T)) {
+	c.mu.Lock()
+	f(c.dat)
+	c.mu.Unlock()
 }
 
-// watch runs session.watch, then remove from the cache
-func (c *Cache) watch(session *T) {
-	session.watch(c.settings.Lifetime)
-	c.lock.Lock() // guards cache write
-	delete(c.cache, session.id)
-	c.lock.Unlock()
+// Keys returns a new slice with all the string keys
+func (c *Cache) Keys() []string {
+	c.mu.Lock()
+	keys := make([]string, 0, len(c.dat))
+	for k := range c.dat {
+		keys = append(keys, k)
+	}
+	c.mu.Unlock()
+	return keys
 }
+
+// Observe adds a func to be called when a *T is explicitly set
+func (c *Cache) Observe(f Func) { c.obs = append(c.obs, f) }
+
+// Remove deletes an string *T
+func (c *Cache) Remove(k string) { c.Set(k, nil) }

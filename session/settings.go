@@ -6,7 +6,7 @@ import (
 	"taylz.io/z/charset"
 )
 
-// Settings is configuration for Cache cookies usage
+// Settings is configuration for sessions
 type Settings struct {
 	CookieID string
 	Keygen   keygen.I
@@ -21,4 +21,5 @@ var SettingsDefault = Settings{
 		CharSet: charset.AlphaCapitalNumeric,
 		Rand:    keygen.DefaultSettings.Rand,
 	},
+	Lifetime: 12 * types.Hour,
 }
