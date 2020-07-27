@@ -14,9 +14,9 @@ import (
 type T struct {
 	mux      *Mux
 	wsmux    *websocket.Mux
-	Sessions session.Storer
-	Sockets  websocket.Storer
-	Users    user.Storer
+	Sessions *session.Server
+	Sockets  *websocket.Server
+	Users    *user.Server
 }
 
 func New() *T {
