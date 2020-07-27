@@ -9,6 +9,6 @@ import (
 type Settings struct {
 	// Sessions server pointer
 	Sessions *session.Server
-	// Sockets cache pointer
-	Sockets *websocket.Cache
+	// Sockets store
+	Sockets websocket.Storer
 }

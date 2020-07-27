@@ -21,9 +21,9 @@ type Conn = websocket.Conn
 // Upgrader = websocket.Handler
 type Upgrader = websocket.Handler
 
-// New creates an initialized orphan Websocket
-func New(conn *Conn, cache *Cache, keygen keygen.I) (ws *T) {
-	cache.Sync(func(dat map[string]*T) {
+// New creates a Websocket
+func New(conn *Conn, store Storer, keygen keygen.I) (ws *T) {
+	store.Sync(func(dat map[string]*T) {
 		var id string
 		for ok := true; ok; _, ok = dat[id] {
 			id = keygen.New()

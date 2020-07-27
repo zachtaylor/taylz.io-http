@@ -5,46 +5,43 @@ import (
 	"taylz.io/http/websocket"
 )
 
-// Server is a *Cache and *Mux
+// Server is a user service
 type Server struct {
 	Settings Settings
-	Cache    *Cache
-	live     map[string]string
+	Storer
+	live map[string]string
 }
 
 // NewServer creates a user server
-func NewServer(settings Settings, cache *Cache) (server *Server) {
+func NewServer(settings Settings, store Storer) (server *Server) {
 	server = &Server{
 		Settings: settings,
-		Cache:    cache,
+		Storer:   store,
 		live:     make(map[string]string),
 	}
 
-	settings.Sessions.Cache.Observe(server.onSession)
+	settings.Sessions.Observe(server.onSession)
 	settings.Sockets.Observe(server.onWebsocket)
 
 	return
 }
 
 func (s *Server) onSession(id string, session *session.T) {
-	if session == nil {
-		s.Cache.Remove(id)
-	} else if s.Cache.Get(id) == nil {
-		s.Cache.Set(id, New(session))
-	}
+	s.Sync(func(dat map[string]*T) {
+		if session == nil {
+			delete(dat, id)
+		} else if dat[id] == nil {
+			dat[id] = New(session)
+		}
+	})
 }
 
 func (s *Server) onWebsocket(id string, ws *websocket.T) {
 	if ws == nil {
-		if user := s.Cache.Get(s.live[id]); user != nil {
+		if user := s.Get(s.live[id]); user != nil {
 			user.RemoveSocketID(id)
 		}
 		delete(s.live, id)
-		return
-	}
-
-	if user := s.Cache.Get(s.live[id]); user != nil {
-		user.AddSocketID(id)
 		return
 	}
 
@@ -57,6 +54,8 @@ func (s *Server) onWebsocket(id string, ws *websocket.T) {
 
 // AddUser links a websocket to a user manually
 func (s *Server) AddUser(session *session.T, ws *websocket.T) {
-	s.Cache.Get(session.Name()).AddSocketID(ws.ID())
-	s.live[ws.ID()] = session.Name()
+	if u := s.Get(session.Name()); u != nil {
+		s.live[ws.ID()] = session.Name()
+		u.AddSocketID(ws.ID())
+	}
 }

@@ -5,16 +5,16 @@ import "net/http"
 // Server is a *Cache and *Mux
 type Server struct {
 	Settings Settings
-	Cache    *Cache
-	Mux      *Mux
+	Storer
+	Handler
 }
 
 // NewServer creates a websocket server
-func NewServer(settings Settings, cache *Cache, mux *Mux) *Server {
+func NewServer(settings Settings, s Storer, h Handler) *Server {
 	return &Server{
 		Settings: settings,
-		Cache:    cache,
-		Mux:      mux,
+		Storer:   s,
+		Handler:  h,
 	}
 }
 
@@ -23,16 +23,11 @@ func (s *Server) Upgrader() http.Handler {
 	return Upgrader(s.connect)
 }
 func (s *Server) connect(conn *Conn) {
-	ws := New(conn, s.Cache, s.Settings.Keygen)
-	s.Watch(ws)
-	s.Cache.Remove(ws.id)
-}
-
-// Watch occupies the active goroutine with websocket monitor
-func (s *Server) Watch(ws *T) {
+	ws := New(conn, s, s.Settings.Keygen)
 	if s.Settings.KeepAlive == nil {
-		Watch(ws, s.Mux)
+		Watch(ws, s)
 	} else {
-		WatchWithMonitor(ws, *s.Settings.KeepAlive, s.Mux)
+		WatchWithMonitor(ws, *s.Settings.KeepAlive, s)
 	}
+	s.Remove(ws.id)
 }

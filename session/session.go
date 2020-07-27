@@ -15,8 +15,8 @@ type T struct {
 }
 
 // New creates a Session
-func New(name string, cache *Cache, keygen keygen.I, lifetime time.Duration) (session *T) {
-	cache.Sync(func(dat map[string]*T) {
+func New(name string, store Storer, keygen keygen.I, lifetime time.Duration) (session *T) {
+	store.Sync(func(dat map[string]*T) {
 		var id string
 		for ok := true; ok; _, ok = dat[id] {
 			id = keygen.New()
@@ -28,13 +28,13 @@ func New(name string, cache *Cache, keygen keygen.I, lifetime time.Duration) (se
 			done: make(chan bool),
 		}
 		dat[id] = session
-		go watch(cache, session, lifetime)
+		go watch(store, session, lifetime)
 	})
 	return
 }
-func watch(cache *Cache, session *T, lifetime time.Duration) {
+func watch(store Storer, session *T, lifetime time.Duration) {
 	session.watch(lifetime)
-	cache.Remove(session.ID())
+	store.Remove(session.ID())
 }
 
 // ID returns the Session ID
