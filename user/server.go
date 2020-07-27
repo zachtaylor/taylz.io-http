@@ -52,6 +52,11 @@ func (s *Server) onWebsocket(id string, ws *websocket.T) {
 	s.AddUser(session, ws)
 }
 
+// GetUser returns the user associated with the websocket id
+func (s *Server) GetUser(ws *websocket.T) *T {
+	return s.Get(s.live[ws.ID()])
+}
+
 // AddUser links a websocket to a user manually
 func (s *Server) AddUser(session *session.T, ws *websocket.T) {
 	if u := s.Get(session.Name()); u != nil {
