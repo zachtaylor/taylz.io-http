@@ -22,3 +22,9 @@ type HandlerFunc func(*T, *Message)
 // ServeWS implements Handler by calling the func
 func (f HandlerFunc) ServeWS(t *T, m *Message) { f(t, m) }
 func (f HandlerFunc) isHandler() Handler       { return f }
+
+// RouterURI creates a literal match check against Message.URI
+type RouterURI string
+
+// RouteWS implements Router by literally matching the Message.URI
+func (r RouterURI) RouteWS(m *Message) bool { return string(r) == m.URI }

@@ -23,6 +23,11 @@ func (mux *Mux) Route(r router.I, h http.Handler) {
 	})
 }
 
+// Handle is a macro for Route(router.Path(route), h)
+func (mux *Mux) Handle(route string, h Handler) {
+	mux.Route(router.Path(route), h)
+}
+
 // ServeHTTP dispatched the request to the internal route
 func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var handler http.Handler

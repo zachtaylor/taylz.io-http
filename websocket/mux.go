@@ -3,14 +3,19 @@ package websocket
 // Mux is a slice of *Route that implements Handler
 type Mux []*Route
 
-// Append adds a Route to this Mux
-func (mux *Mux) Append(r *Route) {
+// Add adds a Route to this Mux
+func (mux *Mux) Add(r *Route) {
 	*mux = append(*mux, r)
 }
 
-// Route is a macro for Append(Route{})
+// Route is a macro for Add(Route{})
 func (mux *Mux) Route(r Router, h Handler) {
-	mux.Append(&Route{r, h})
+	mux.Add(&Route{r, h})
+}
+
+// Handle is a macro for Route(RouterURI(route), h)
+func (mux *Mux) Handle(route string, h Handler) {
+	mux.Route(RouterURI(route), h)
 }
 
 // ServeWS satisfies Handler by routing to a matching *Route
