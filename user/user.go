@@ -2,20 +2,23 @@ package user
 
 import (
 	"taylz.io/http/session"
+	"taylz.io/http/websocket"
 	"taylz.io/types"
 )
 
 // T is a user
 type T struct {
-	Session *session.T
-	socks   *types.SetString
+	settings *Settings
+	Session  *session.T
+	socks    *types.SetString
 }
 
 // New returns a User with the Session
-func New(session *session.T) *T {
+func New(settings *Settings, session *session.T) *T {
 	return &T{
-		Session: session,
-		socks:   types.NewSetString(),
+		settings: settings,
+		Session:  session,
+		socks:    types.NewSetString(),
 	}
 }
 
@@ -27,3 +30,12 @@ func (t *T) RemoveSocketID(socketid string) { t.socks.Remove(socketid) }
 
 // Sockets returns the socket ids linked with the user
 func (t *T) Sockets() types.SliceString { return t.socks.SliceString() }
+
+// Message sends a message to all websockets
+func (t *T) Message(m *websocket.Message) {
+	for _, k := range t.Sockets() {
+		if ws := t.settings.Sockets.Get(k); ws != nil {
+			ws.Message(m)
+		}
+	}
+}

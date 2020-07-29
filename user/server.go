@@ -31,7 +31,7 @@ func (s *Server) onSession(id string, session *session.T) {
 		if session == nil {
 			delete(dat, id)
 		} else if dat[id] == nil {
-			dat[id] = New(session)
+			dat[id] = New(&s.Settings, session)
 		}
 	})
 }
