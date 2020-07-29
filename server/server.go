@@ -6,9 +6,6 @@ import (
 	"taylz.io/http/session"
 	"taylz.io/http/user"
 	"taylz.io/http/websocket"
-	"taylz.io/keygen"
-	"taylz.io/types"
-	"taylz.io/z/charset"
 )
 
 type T struct {
@@ -19,22 +16,10 @@ type T struct {
 	Users    *user.Server
 }
 
-func New() *T {
-	sessions := session.NewServer(session.SettingsDefault, session.NewCache())
-	keepalive := 30 * types.Second
+func New(sesset session.Settings, sckset websocket.Settings) *T {
+	sessions := session.NewServer(sesset, session.NewCache())
 	wsmux := &websocket.Mux{}
-	sockets := websocket.NewServer(
-		websocket.Settings{
-			KeepAlive: &keepalive,
-			Keygen: &keygen.Settings{
-				KeySize: 4,
-				CharSet: charset.AlphaCapitalNumeric,
-				Rand:    types.NewRand(types.NewSeeder(types.NewTime().UnixNano())),
-			},
-		},
-		websocket.NewCache(),
-		wsmux,
-	)
+	sockets := websocket.NewServer(sckset, websocket.NewCache(), wsmux)
 	users := user.NewServer(
 		user.Settings{
 			Sessions: sessions,
