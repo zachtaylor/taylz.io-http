@@ -24,7 +24,7 @@ func (mux *Mux) Route(r router.I, h http.Handler) {
 }
 
 // Handle is a macro for Route(router.Path(route), h)
-func (mux *Mux) Handle(route string, h Handler) {
+func (mux *Mux) Handle(route string, h http.Handler) {
 	mux.Route(router.Path(route), h)
 }
 
