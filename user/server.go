@@ -27,11 +27,11 @@ func NewServer(settings Settings, store Storer) (server *Server) {
 }
 
 func (s *Server) onSession(id string, session *session.T) {
-	s.Sync(func(dat map[string]*T) {
+	s.Sync(func(get Getter, set Setter) {
 		if session == nil {
-			delete(dat, id)
-		} else if dat[id] == nil {
-			dat[id] = New(&s.Settings, session)
+			set(id, nil)
+		} else if get(id) == nil {
+			set(id, New(&s.Settings, session))
 		}
 	})
 }

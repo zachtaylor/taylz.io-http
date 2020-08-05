@@ -16,9 +16,9 @@ type T struct {
 
 // New creates a Session
 func New(name string, store Storer, keygen keygen.I, lifetime time.Duration) (session *T) {
-	store.Sync(func(dat map[string]*T) {
+	store.Sync(func(get Getter, set Setter) {
 		var id string
-		for ok := true; ok; _, ok = dat[id] {
+		for ok := true; ok; ok = get(id) != nil {
 			id = keygen.New()
 		}
 		session = &T{
@@ -27,7 +27,7 @@ func New(name string, store Storer, keygen keygen.I, lifetime time.Duration) (se
 			in:   make(chan bool),
 			done: make(chan bool),
 		}
-		dat[id] = session
+		set(id, session)
 		go watch(store, session, lifetime)
 	})
 	return

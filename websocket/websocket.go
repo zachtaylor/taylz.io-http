@@ -23,9 +23,9 @@ type Upgrader = websocket.Handler
 
 // New creates a Websocket
 func New(conn *Conn, store Storer, keygen keygen.I) (ws *T) {
-	store.Sync(func(dat map[string]*T) {
+	store.Sync(func(get Getter, set Setter) {
 		var id string
-		for ok := true; ok; _, ok = dat[id] {
+		for ok := true; ok; ok = get(id) != nil {
 			id = keygen.New()
 		}
 		ws = &T{
@@ -35,7 +35,7 @@ func New(conn *Conn, store Storer, keygen keygen.I) (ws *T) {
 			recv: newChanMessage(conn),
 			done: make(chan bool),
 		}
-		dat[id] = ws
+		set(id, ws)
 		// go watch(cache, ws)
 		// upgrader is responsible for goroutine
 	})
