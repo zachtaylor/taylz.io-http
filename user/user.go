@@ -39,3 +39,11 @@ func (t *T) Message(m *websocket.Message) {
 		}
 	}
 }
+
+func (t *T) Write(bytes types.Bytes) {
+	for _, k := range t.Sockets() {
+		if ws := t.settings.Sockets.Get(k); ws != nil {
+			ws.Write(bytes)
+		}
+	}
+}

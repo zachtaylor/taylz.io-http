@@ -1,14 +1,12 @@
 package websocket
 
 import (
-	"time"
-
 	"golang.org/x/net/websocket"
 	"taylz.io/types"
 )
 
 // WatchWithMonitor performs socket i/o and sends json when lonely
-func WatchWithMonitor(ws *T, timeout time.Duration, handler Handler) {
+func WatchWithMonitor(ws *T, timeout types.Duration, handler Handler) {
 	for lonelyTimer, resetCD := types.NewTimer(timeout), types.NewTime(); ; {
 		select {
 		case <-lonelyTimer.C:

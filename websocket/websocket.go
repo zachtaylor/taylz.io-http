@@ -46,12 +46,10 @@ func New(conn *Conn, store Storer, keygen keygen.I) (ws *T) {
 func (ws *T) ID() string { return ws.id }
 
 // Write starts a goroutine to write bytes to to the socket API
-func (ws *T) Write(buff types.Bytes) {
-	go ws.write(buff)
-}
-func (ws *T) write(buff types.Bytes) {
+func (ws *T) Write(bytes types.Bytes) { go ws.write(bytes) }
+func (ws *T) write(bytes types.Bytes) {
 	if ws.send != nil {
-		ws.send <- buff
+		ws.send <- bytes
 	}
 }
 
@@ -68,9 +66,7 @@ func (ws *T) Close() {
 }
 
 // Message implements Messager
-func (ws *T) Message(m *Message) {
-	ws.Write(types.BytesString(types.StringDict(m.JSON())))
-}
+func (ws *T) Message(m *Message)   { ws.Write(types.BytesDict(m.JSON())) }
 func (ws *T) isMessager() Messager { return ws }
 
 var wsLonely = types.Bytes(`{"uri":"/ping"}`)
@@ -96,7 +92,7 @@ func nextMessage(conn *Conn) (*Message, error) {
 	s, msg := "", &Message{}
 	if err := websocket.Message.Receive(conn, &s); err != nil {
 		return nil, err
-	} else if err := types.DecodeJSON(types.BufferString(s), msg); err != nil {
+	} else if err := types.DecodeJSON(types.NewBufferString(s), msg); err != nil {
 		return nil, err
 	}
 	return msg, nil
