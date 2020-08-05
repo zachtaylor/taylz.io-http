@@ -9,6 +9,8 @@ import (
 // Settings is configuration for sessions
 type Settings struct {
 	CookieID string
+	Secure   bool
+	Strict   bool
 	Keygen   keygen.I
 	Lifetime types.Duration
 }
@@ -16,6 +18,7 @@ type Settings struct {
 // SettingsDefault is a var Settings for using in basic case
 var SettingsDefault = Settings{
 	CookieID: "SessionID",
+	Strict:   true,
 	Keygen: &keygen.Settings{
 		KeySize: 12,
 		CharSet: charset.AlphaCapitalNumeric,

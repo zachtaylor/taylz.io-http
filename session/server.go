@@ -25,6 +25,29 @@ func (s *Server) RequestSessionCookie(r *http.Request) (session *T) {
 	return s.Get(cookie.Value)
 }
 
+// WriteSessionCookie writes the session cookie to the ResponseWriter
+func (s *Server) WriteSessionCookie(w http.ResponseWriter, session *T) {
+	s.writeSessionCookiePart(w, s.Settings.CookieID+"="+session.id+"; Path=/; ")
+}
+
+// WriteSessionCookieExpired writes an expired session cookie to the ResponseWriter
+func (s *Server) WriteSessionCookieExpired(w http.ResponseWriter) {
+	s.writeSessionCookiePart(w, s.Settings.CookieID+"=; Path=/; Expires==Thu, 01 Jan 1970 00:00:00 GMT; ")
+}
+
+func (s *Server) writeSessionCookiePart(w http.ResponseWriter, part string) {
+	if s.Settings.Secure {
+		part += "Secure; "
+	}
+	if s.Settings.Strict {
+		part += "SameSite=Strict;"
+	} else {
+		part += "SameSite=Lax;"
+	}
+	w.Header().Set("Set-Cookie", part)
+
+}
+
 // Grant returns a new Session granted to the username
 func (s *Server) Grant(name string) *T {
 	return New(name, s, s.Settings.Keygen, s.Settings.Lifetime)
