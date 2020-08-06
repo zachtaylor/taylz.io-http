@@ -9,15 +9,17 @@ import (
 type Server struct {
 	Settings Settings
 	Storer
-	live map[string]string
+	userSocket  map[string]string
+	userSession map[string]string
 }
 
 // NewServer creates a user server
 func NewServer(settings Settings, store Storer) (server *Server) {
 	server = &Server{
-		Settings: settings,
-		Storer:   store,
-		live:     make(map[string]string),
+		Settings:    settings,
+		Storer:      store,
+		userSocket:  make(map[string]string),
+		userSession: make(map[string]string),
 	}
 
 	settings.Sessions.Observe(server.onSession)
@@ -29,8 +31,10 @@ func NewServer(settings Settings, store Storer) (server *Server) {
 func (s *Server) onSession(id string, session *session.T) {
 	s.Sync(func(get Getter, set Setter) {
 		if session == nil {
-			set(session.Name(), nil)
-		} else if get(id) == nil {
+			set(s.userSession[id], nil)
+			delete(s.userSession, id)
+		} else {
+			s.userSession[id] = session.Name()
 			set(session.Name(), New(&s.Settings, session))
 		}
 	})
@@ -38,10 +42,10 @@ func (s *Server) onSession(id string, session *session.T) {
 
 func (s *Server) onWebsocket(id string, ws *websocket.T) {
 	if ws == nil {
-		if user := s.Get(s.live[id]); user != nil {
+		if user := s.Get(s.userSocket[id]); user != nil {
 			user.RemoveSocketID(id)
 		}
-		delete(s.live, id)
+		delete(s.userSocket, id)
 		return
 	}
 
@@ -53,14 +57,12 @@ func (s *Server) onWebsocket(id string, ws *websocket.T) {
 }
 
 // GetUser returns the user associated with the websocket id
-func (s *Server) GetUser(ws *websocket.T) *T {
-	return s.Get(s.live[ws.ID()])
-}
+func (s *Server) GetUser(ws *websocket.T) *T { return s.Get(s.userSocket[ws.ID()]) }
 
 // AddUser links a websocket to a user manually
 func (s *Server) AddUser(session *session.T, ws *websocket.T) {
 	if u := s.Get(session.Name()); u != nil {
-		s.live[ws.ID()] = session.Name()
+		s.userSocket[ws.ID()] = session.Name()
 		u.AddSocketID(ws.ID())
 	}
 }
