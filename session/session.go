@@ -6,6 +6,8 @@ import (
 	"taylz.io/keygen"
 )
 
+//go:generate go-gengen -p=session -k=string -v=*T
+
 // T is a Session
 type T struct {
 	id   string
@@ -55,6 +57,7 @@ func (session *T) Done() <-chan bool { return session.done }
 // send controls the input to session lifetime, renew or expire
 func (session *T) send(ok bool) { session.in <- ok }
 
+// String returns a string representation of this session
 func (session *T) String() string {
 	if session == nil {
 		return "nil"
@@ -64,26 +67,21 @@ func (session *T) String() string {
 
 // watch monitors the session duration, and can be renewed for the same duration, or stopped
 func (session *T) watch(d time.Duration) {
-	defer session.close()
 	timer := time.NewTimer(d)
-	for {
+	for on := true; on; {
 		select {
 		case ok := <-session.in:
 			if !timer.Stop() {
 				<-timer.C // if can't stop, drain the channel
 			}
-			if !ok { // signal close
-				return
-			} // signal refresh
-			timer.Reset(d)
+			on = ok // signal
+			if on { // refresh
+				timer.Reset(d)
+			}
 		case <-timer.C:
-			return
+			on = false
 		}
 	}
-}
-
-// close kills the Session
-func (session *T) close() {
 	close(session.in)
 	close(session.done)
 }
