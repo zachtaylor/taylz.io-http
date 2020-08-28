@@ -1,9 +1,8 @@
 package websocket
 
-import (
-	"golang.org/x/net/websocket"
-	"taylz.io/types"
-)
+import "taylz.io/types"
+
+var wsLonely = types.Bytes(`{"uri":"/ping"}`)
 
 // WatchWithMonitor performs socket i/o and sends json when lonely
 func WatchWithMonitor(ws *T, timeout types.Duration, handler Handler) {
@@ -13,15 +12,14 @@ func WatchWithMonitor(ws *T, timeout types.Duration, handler Handler) {
 			ws.Write(wsLonely)
 			lonelyTimer.Reset(timeout)
 		case buff := <-ws.send: // write to client
-			// lonelyTimer.Reset on write effect has 1 sec cooldown
-			if now := types.NewTime(); now.Sub(resetCD) > types.Second {
+			if now := types.NewTime(); now.Sub(resetCD) > types.Second { // 1s cooldown
 				if !lonelyTimer.Stop() {
 					<-lonelyTimer.C
 				}
 				lonelyTimer.Reset(timeout)
 				resetCD = now
 			}
-			if err := websocket.Message.Send(ws.Conn, buff); err != nil {
+			if err := ws.Send(buff); err != nil {
 				if !lonelyTimer.Stop() {
 					<-lonelyTimer.C
 				}
@@ -37,8 +35,7 @@ func WatchWithMonitor(ws *T, timeout types.Duration, handler Handler) {
 				ws.Close()
 				return
 			}
-			// lonelyTimer.Reset on read effect has 1 sec cooldown
-			if now := types.NewTime(); now.Sub(resetCD) > types.Second {
+			if now := types.NewTime(); now.Sub(resetCD) > types.Second { // 1s cooldown
 				if !lonelyTimer.Stop() {
 					<-lonelyTimer.C
 				}
@@ -55,7 +52,7 @@ func Watch(ws *T, handler Handler) {
 	for {
 		select {
 		case buff := <-ws.send: // write to client
-			if err := websocket.Message.Send(ws.Conn, buff); err != nil {
+			if err := ws.Send(buff); err != nil {
 				go drainChanMessage(ws.recv)
 				ws.Close()
 				return

@@ -49,7 +49,7 @@ func (s *Server) onWebsocket(id string, ws *websocket.T) {
 		return
 	}
 
-	session := s.Settings.Sessions.RequestSessionCookie(ws.Conn.Request())
+	session := s.Settings.Sessions.RequestSessionCookie(ws.Request())
 	if session == nil {
 		return
 	}

@@ -16,19 +16,34 @@ func NewMessage(uri string, data types.Dict) *Message {
 	}
 }
 
-// JSON returns json data
-func (m *Message) JSON() types.Dict {
-	if m == nil {
-		return nil
-	}
-	return types.Dict{
-		"uri":  m.URI,
-		"data": m.Data,
-	}
+func newChanMessage(conn *Conn) <-chan *Message {
+	msgs := make(chan *Message)
+	go func() {
+		for {
+			if msg, err := receiveMessage(conn); err == nil {
+				msgs <- msg
+			} else if err == types.EOF {
+				break
+			}
+		}
+		close(msgs)
+	}()
+	return msgs
 }
 
-// Messager is an interface hook for Message targets
-type Messager interface {
-	// Message writes the Message to the receiver
-	Message(*Message)
+func receiveMessage(conn *Conn) (*Message, error) {
+	buf, err := Receive(conn)
+	if err != nil {
+		return nil, err
+	}
+	msg := &Message{}
+	if err = types.DecodeJSON(types.NewBufferString(buf), msg); err != nil {
+		return nil, err
+	}
+	return msg, nil
+}
+
+func drainChanMessage(msgs <-chan *Message) {
+	for ok := true; ok; _, ok = <-msgs {
+	}
 }

@@ -31,15 +31,10 @@ func (t *T) RemoveSocketID(socketid string) { t.socks.Remove(socketid) }
 // Sockets returns the socket ids linked with the user
 func (t *T) Sockets() types.SliceString { return t.socks.SliceString() }
 
-// Message sends a message to all websockets
-func (t *T) Message(m *websocket.Message) {
-	for _, k := range t.Sockets() {
-		if ws := t.settings.Sockets.Get(k); ws != nil {
-			ws.Message(m)
-		}
-	}
-}
+// Message calls Write using websocket.Transport data format
+func (t *T) Message(uri string, data types.Dict) { t.Write(websocket.Transport(uri, data)) }
 
+// Write writes the buffer to all sockets
 func (t *T) Write(bytes types.Bytes) {
 	for _, k := range t.Sockets() {
 		if ws := t.settings.Sockets.Get(k); ws != nil {
