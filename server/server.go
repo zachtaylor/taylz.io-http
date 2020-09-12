@@ -23,7 +23,7 @@ func New(sesset session.Settings, sckset websocket.Settings) *T {
 	users := user.NewServer(
 		user.Settings{
 			Sessions: sessions,
-			Sockets:  sockets,
+			Sockets:  sockets.Cache,
 		},
 		user.NewCache(),
 	)

@@ -8,18 +8,14 @@ import (
 // Server is a user service
 type Server struct {
 	Settings Settings
-	Storer
-	userSocket  map[string]string
-	userSession map[string]string
+	*Cache
 }
 
 // NewServer creates a user server
-func NewServer(settings Settings, store Storer) (server *Server) {
+func NewServer(settings Settings, cache *Cache) (server *Server) {
 	server = &Server{
-		Settings:    settings,
-		Storer:      store,
-		userSocket:  make(map[string]string),
-		userSession: make(map[string]string),
+		Settings: settings,
+		Cache:    cache,
 	}
 
 	settings.Sessions.Observe(server.onSession)
@@ -28,41 +24,38 @@ func NewServer(settings Settings, store Storer) (server *Server) {
 	return
 }
 
-func (s *Server) onSession(id string, session *session.T) {
-	s.Sync(func(get Getter, set Setter) {
-		if session == nil {
-			set(s.userSession[id], nil)
-			delete(s.userSession, id)
+func (s *Server) onSession(id string, oldSession, newSession *session.T) {
+	s.Sync(func(get CacheGetter, set CacheSetter) {
+		if newSession == nil {
+			set(oldSession.Name(), nil)
 		} else {
-			s.userSession[id] = session.Name()
-			set(session.Name(), New(&s.Settings, session))
+			set(newSession.Name(), New(&s.Settings, newSession))
 		}
 	})
 }
 
-func (s *Server) onWebsocket(id string, ws *websocket.T) {
-	if ws == nil {
-		if user := s.Get(s.userSocket[id]); user != nil {
-			user.RemoveSocketID(id)
+func (s *Server) onWebsocket(id string, oldWS, newWS *websocket.T) {
+	if newWS != nil {
+		if session := s.Settings.Sessions.RequestSessionCookie(newWS.Request()); session != nil {
+			s.Pair(session, newWS)
 		}
-		delete(s.userSocket, id)
-		return
+	} else if user := s.GetSocket(oldWS); user != nil {
+		user.RemoveSocketID(id)
 	}
-
-	session := s.Settings.Sessions.RequestSessionCookie(ws.Request())
-	if session == nil {
-		return
-	}
-	s.AddUser(session, ws)
 }
 
-// GetUser returns the user associated with the websocket id
-func (s *Server) GetUser(ws *websocket.T) *T { return s.Get(s.userSocket[ws.ID()]) }
+// GetSocket returns the user associated with the websocket id
+func (s *Server) GetSocket(ws *websocket.T) *T {
+	if session := s.Settings.Sessions.RequestSessionCookie(ws.Request()); session != nil {
+		return s.Get(session.Name())
+	}
 
-// AddUser links a websocket to a user manually
-func (s *Server) AddUser(session *session.T, ws *websocket.T) {
-	if u := s.Get(session.Name()); u != nil {
-		s.userSocket[ws.ID()] = session.Name()
-		u.AddSocketID(ws.ID())
+	return nil
+}
+
+// Pair links a websocket to a user manually
+func (s *Server) Pair(session *session.T, ws *websocket.T) {
+	if user := s.Get(session.Name()); user != nil {
+		user.AddSocketID(ws.ID())
 	}
 }

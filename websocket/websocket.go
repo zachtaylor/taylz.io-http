@@ -32,11 +32,9 @@ type T struct {
 	done chan bool
 }
 
-//go:generate go-gengen -p=websocket -k=string -v=*T
-
 // New creates a Websocket, which must be watched
-func New(conn *Conn, store Storer, keygen keygen.I) (ws *T) {
-	store.Sync(func(get Getter, set Setter) {
+func New(conn *Conn, cache *Cache, keygen keygen.I) (ws *T) {
+	cache.Sync(func(get CacheGetter, set CacheSetter) {
 		var id string
 		for ok := true; ok; ok = get(id) != nil {
 			id = keygen.New()

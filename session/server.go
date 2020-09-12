@@ -5,14 +5,14 @@ import "net/http"
 // Server is a session manager
 type Server struct {
 	Settings Settings
-	Storer
+	*Cache
 }
 
 // NewServer creates a session server
-func NewServer(settings Settings, store Storer) *Server {
+func NewServer(settings Settings, cache *Cache) *Server {
 	return &Server{
 		Settings: settings,
-		Storer:   store,
+		Cache:    cache,
 	}
 }
 
@@ -50,5 +50,5 @@ func (s *Server) writeSessionCookiePart(w http.ResponseWriter, part string) {
 
 // Grant returns a new Session granted to the username
 func (s *Server) Grant(name string) *T {
-	return New(name, s, s.Settings.Keygen, s.Settings.Lifetime)
+	return New(name, s.Cache, s.Settings.Keygen, s.Settings.Lifetime)
 }

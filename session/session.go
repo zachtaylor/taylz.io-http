@@ -6,8 +6,6 @@ import (
 	"taylz.io/keygen"
 )
 
-//go:generate go-gengen -p=session -k=string -v=*T
-
 // T is a Session
 type T struct {
 	id   string
@@ -17,8 +15,8 @@ type T struct {
 }
 
 // New creates a Session
-func New(name string, store Storer, keygen keygen.I, lifetime time.Duration) (session *T) {
-	store.Sync(func(get Getter, set Setter) {
+func New(name string, cache *Cache, keygen keygen.I, lifetime time.Duration) (session *T) {
+	cache.Sync(func(get CacheGetter, set CacheSetter) {
 		var id string
 		for ok := true; ok; ok = get(id) != nil {
 			id = keygen.New()
@@ -30,13 +28,13 @@ func New(name string, store Storer, keygen keygen.I, lifetime time.Duration) (se
 			done: make(chan bool),
 		}
 		set(id, session)
-		go watch(store, session, lifetime)
+		go watch(cache, session, lifetime)
 	})
 	return
 }
-func watch(store Storer, session *T, lifetime time.Duration) {
+func watch(cache *Cache, session *T, lifetime time.Duration) {
 	session.watch(lifetime)
-	store.Remove(session.ID())
+	cache.Remove(session.ID())
 }
 
 // ID returns the Session ID
