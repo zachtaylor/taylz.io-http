@@ -29,7 +29,7 @@ func (t *T) AddSocketID(socketid string) { t.socks.Add(socketid) }
 func (t *T) RemoveSocketID(socketid string) { t.socks.Remove(socketid) }
 
 // Sockets returns the socket ids linked with the user
-func (t *T) Sockets() types.SliceString { return t.socks.SliceString() }
+func (t *T) Sockets() types.SliceString { return t.socks.Slice() }
 
 // Message calls Write using websocket.Transport data format
 func (t *T) Message(uri string, data types.Dict) { t.Write(websocket.Transport(uri, data)) }
